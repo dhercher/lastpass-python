@@ -5,15 +5,14 @@ from . import parser
 
 class Vault(object):
     @classmethod
-    def open_remote(cls, username, password, multifactor_password=None):
+    def open_remote(cls, username, password, multifactor_password=None, blob_filename=None):
         """Fetches a blob from the server and creates a vault"""
-        return cls.open(cls.fetch_blob(username, password, multifactor_password), username, password)
+        return cls.open(cls.fetch_blob(username, password, multifactor_password, blob_filename), username, password)
 
     @classmethod
     def open_local(cls, blob_filename, username, password):
         """Creates a vault from a locally stored blob"""
-        # TODO: read the blob here
-        pass
+        return cls.open(cls.fetch_local_blob(blob_filename), username, password)
 
     @classmethod
     def open(cls, blob, username, password):
@@ -21,9 +20,14 @@ class Vault(object):
         return cls(blob, blob.encryption_key(username, password))
 
     @classmethod
-    def fetch_blob(cls, username, password, multifactor_password=None):
+    def fetch_local_blob(self, blob_filename):
+        return fetcher.blob.LocalBlob(blob_filename)
+
+    @classmethod
+    def fetch_blob(cls, username, password, multifactor_password=None, blob_filename=None):
         """Just fetches the blob, could be used to store it locally"""
-        return fetcher.fetch(fetcher.login(username, password, multifactor_password))
+        return fetcher.fetch(fetcher.login(username, password, multifactor_password)).store_local_blob(blob_filename)
+
 
     def __init__(self, blob, encryption_key):
         """This more of an internal method, use one of the static constructors instead"""
